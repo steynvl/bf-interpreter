@@ -13,8 +13,11 @@ type Tape struct {
 	StartOfLoop int
 }
 
+var srcFileName string
+
 func ScanBf(fileName string) []Tape {
-	source := readFile(fileName)
+	srcFileName = fileName
+	source := readFile()
 
 	programCounter, i := 0, 0
 
@@ -47,9 +50,7 @@ func ScanBf(fileName string) []Tape {
 		case ']':
 
 			if len(programJumps) == 0 {
-				// TODO
-				fmt.Println("] before [")
-				os.Exit(11)
+				abortCompile(ERR_BACK_JUMP_BEFORE_FORWARD)
 			}
 
 			i = programJumps[len(programJumps) - 1]
@@ -59,8 +60,7 @@ func ScanBf(fileName string) []Tape {
 			tape[i].StartOfLoop = programCounter
 
 		default:
-			// TODO error
-			os.Exit(10)
+			abortCompile(ERR_UNKNOWN_CHARACTER)
 
 		}
 		programCounter++
@@ -74,13 +74,26 @@ func removeLastEl(p []int) []int {
 	return p[:len(p) - 1]
 }
 
-func readFile(fileName string) string {
-	b, err := ioutil.ReadFile(fileName)
+func readFile() string {
+	b, err := ioutil.ReadFile(srcFileName)
 
 	if err != nil {
-		// TODO
-		os.Exit(9)
+		abortCompile(ERR_OPENING_SOURCE_FILE)
 	}
 
 	return string(b)
+}
+
+func abortCompile(error Error) {
+
+	switch error {
+	case ERR_OPENING_SOURCE_FILE:
+	case ERR_BACK_JUMP_BEFORE_FORWARD:
+	case ERR_UNKNOWN_CHARACTER:
+	}
+
+	// TODO
+	fmt.Println("abort compile")
+	os.Exit(2)
+
 }
