@@ -1,9 +1,11 @@
 package scanner
 
-type Error int
+type Err int
 
 const (
-	ERR_OPENING_SOURCE_FILE      = 0
-	ERR_BACK_JUMP_BEFORE_FORWARD = 1
-	ERR_UNKNOWN_CHARACTER        = 2
+	ErrFilePermission        Err = 0
+	ErrFileDoesNotExist      Err = 1
+	ErrFileOpen              Err = 2
+	ErrBackJumpBeforeForward Err = 3
+	ErrUnknownCharacter      Err = 4
 )

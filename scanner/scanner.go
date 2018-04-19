@@ -2,10 +2,10 @@ package scanner
 
 import (
 	"io/ioutil"
-	"os"
 	"bf-interpreter/token"
 	"unicode"
 	"fmt"
+	"os"
 )
 
 type Tape struct {
@@ -14,9 +14,9 @@ type Tape struct {
 }
 
 var srcFileName string
+var ch int32
 
-func ScanBf(fileName string) []Tape {
-	srcFileName = fileName
+func Scan() []Tape {
 	source := readFile()
 
 	programCounter, i := 0, 0
@@ -29,38 +29,48 @@ func ScanBf(fileName string) []Tape {
 		if unicode.IsSpace(el) {
 			continue
 		}
+		ch = el
+		tok := Tape{token.None, 0}
 
 		switch el {
 
 		case '>':
-			tape = append(tape, Tape{token.INCREMENT_THE_POINTER, 0})
+			tok.Token = token.IncrementPointer
+			tape = append(tape, tok)
 		case '<':
-			tape = append(tape, Tape{token.DECREMENT_THE_POINTER, 0})
+			tok.Token = token.DecrementPointer
+			tape = append(tape, tok)
 		case '+':
-			tape = append(tape, Tape{token.INCREMENT_THE_BYTE, 0})
+			tok.Token = token.IncrementByte
+			tape = append(tape, tok)
 		case '-':
-			tape = append(tape, Tape{token.DECREMENT_THE_BYTE, 0})
+			tok.Token = token.DecrementByte
+			tape = append(tape, tok)
 		case '.':
-			tape = append(tape, Tape{token.OUTPUT_BYTE, 0})
+			tok.Token = token.OutputByte
+			tape = append(tape, tok)
 		case ',':
-			tape = append(tape, Tape{token.INPUT_A_BYTE, 0})
+			tok.Token = token.InputByte
+			tape = append(tape, tok)
 		case '[':
-			tape = append(tape, Tape{token.JUMP_FORWARD, 0})
+			tok.Token = token.JumpForward
+			tape = append(tape, tok)
 			programJumps = append(programJumps, programCounter)
 		case ']':
-
 			if len(programJumps) == 0 {
-				abortCompile(ERR_BACK_JUMP_BEFORE_FORWARD)
+				abortCompile(ErrBackJumpBeforeForward)
 			}
 
 			i = programJumps[len(programJumps) - 1]
 			programJumps = removeLastEl(programJumps)
 
-			tape = append(tape, Tape{token.JUMP_BACKWARD, i})
-			tape[i].StartOfLoop = programCounter
+			tok.Token = token.JumpBackward
+			tok.StartOfLoop = i
+			tape = append(tape, tok)
 
+			tape[i].StartOfLoop = programCounter
 		default:
-			abortCompile(ERR_UNKNOWN_CHARACTER)
+			abortCompile(ErrUnknownCharacter)
 
 		}
 		programCounter++
@@ -70,30 +80,45 @@ func ScanBf(fileName string) []Tape {
 	return tape
 }
 
-func removeLastEl(p []int) []int {
-	return p[:len(p) - 1]
+func InitScanner(fileName string) {
+	srcFileName = fileName
 }
 
 func readFile() string {
 	b, err := ioutil.ReadFile(srcFileName)
 
 	if err != nil {
-		abortCompile(ERR_OPENING_SOURCE_FILE)
+		switch err {
+		case os.ErrPermission:
+			abortCompile(ErrFilePermission)
+		case os.ErrNotExist:
+			abortCompile(ErrFileDoesNotExist)
+		default:
+			abortCompile(ErrFileOpen)
+		}
 	}
-
 	return string(b)
 }
 
-func abortCompile(error Error) {
+func removeLastEl(p []int) []int {
+	return p[:len(p) - 1]
+}
 
-	switch error {
-	case ERR_OPENING_SOURCE_FILE:
-	case ERR_BACK_JUMP_BEFORE_FORWARD:
-	case ERR_UNKNOWN_CHARACTER:
+func abortCompile(err Err) {
+	switch err {
+	case ErrFilePermission:
+		fmt.Printf("Err: can't open file '%s', permission denied\n", srcFileName)
+		os.Exit(2)
+	case ErrFileDoesNotExist:
+		fmt.Printf("Err: can't open '%s', file does not exist\n", srcFileName)
+		os.Exit(3)
+	case ErrFileOpen:
+		fmt.Printf("Err: can't open file '%s'\n", srcFileName)
+	case ErrBackJumpBeforeForward:
+		fmt.Printf("Err: ']' occurs before '['\n")
+		os.Exit(5)
+	case ErrUnknownCharacter:
+		fmt.Printf("Err: Unknown character '%c'\n", ch)
+		os.Exit(6)
 	}
-
-	// TODO
-	fmt.Println("abort compile")
-	os.Exit(2)
-
 }
