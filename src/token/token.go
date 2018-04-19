@@ -1,3 +1,6 @@
+// Package token contains type Token that represent
+// the types of tokens the scanner recognises.
+
 package token
 
 type Token int

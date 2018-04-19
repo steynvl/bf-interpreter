@@ -1,10 +1,12 @@
+// Package executor provides a function to execute
+// a scanned bf tape.
 package executor
 
 import (
-	"bf-interpreter/scanner"
-	"bf-interpreter/token"
 	"bufio"
 	"fmt"
+	"bf-interpreter/src/scanner"
+	"bf-interpreter/src/token"
 )
 
 const tapeSize = 30000

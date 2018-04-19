@@ -1,20 +1,22 @@
+// Package scanner provides a function
+// for a small lexical analyser of bf.
 package scanner
 
 import (
-	"bf-interpreter/token"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"unicode"
+	"bf-interpreter/src/token"
 )
 
+// A tape represents a bf program.
 type Tape struct {
 	Token       token.Token
 	StartOfLoop int
 }
 
 var srcFileName string
-var ch int32
 var position SourcePos
 
 func Scan() []Tape {
@@ -38,7 +40,6 @@ func Scan() []Tape {
 		}
 
 		position.col++
-		ch = el
 		tok := Tape{token.None, 0}
 
 		switch el {
@@ -79,7 +80,7 @@ func Scan() []Tape {
 
 			tape[i].StartOfLoop = programCounter
 		default:
-			abortCompile(ErrUnknownCharacter)
+			programCounter--
 
 		}
 		programCounter++
@@ -130,9 +131,5 @@ func abortCompile(err Err) {
 		fmt.Fprintf(os.Stderr, "Error in file \"%s\" at %d:%d: ']' occurs before '['\n",
 			srcFileName, position.line, position.col)
 		os.Exit(5)
-	case ErrUnknownCharacter:
-		fmt.Fprintf(os.Stderr, "Erorr in file \"%s\" at %d:%d: Unknown character '%c'\n",
-			srcFileName, position.line, position.col, ch)
-		os.Exit(6)
 	}
 }

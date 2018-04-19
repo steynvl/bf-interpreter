@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bf-interpreter/executor"
-	"bf-interpreter/scanner"
 	"bufio"
 	"fmt"
 	"os"
+	"bf-interpreter/src/scanner"
+	"bf-interpreter/src/executor"
 )
 
 func main() {
