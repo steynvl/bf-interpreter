@@ -9,3 +9,8 @@ const (
 	ErrBackJumpBeforeForward Err = 3
 	ErrUnknownCharacter      Err = 4
 )
+
+type SourcePos struct {
+	line int
+	col  int
+}

@@ -1,11 +1,11 @@
 package scanner
 
 import (
-	"io/ioutil"
 	"bf-interpreter/token"
-	"unicode"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"unicode"
 )
 
 type Tape struct {
@@ -15,6 +15,7 @@ type Tape struct {
 
 var srcFileName string
 var ch int32
+var position SourcePos
 
 func Scan() []Tape {
 	source := readFile()
@@ -27,8 +28,16 @@ func Scan() []Tape {
 	for _, el := range source {
 
 		if unicode.IsSpace(el) {
+			if string(el) == "\n" {
+				position.line++
+				position.col = -1
+			}
+
+			position.col++
 			continue
 		}
+
+		position.col++
 		ch = el
 		tok := Tape{token.None, 0}
 
@@ -61,7 +70,7 @@ func Scan() []Tape {
 				abortCompile(ErrBackJumpBeforeForward)
 			}
 
-			i = programJumps[len(programJumps) - 1]
+			i = programJumps[len(programJumps)-1]
 			programJumps = removeLastEl(programJumps)
 
 			tok.Token = token.JumpBackward
@@ -82,6 +91,8 @@ func Scan() []Tape {
 
 func InitScanner(fileName string) {
 	srcFileName = fileName
+	position.line = 1
+	position.col = 0
 }
 
 func readFile() string {
@@ -101,24 +112,27 @@ func readFile() string {
 }
 
 func removeLastEl(p []int) []int {
-	return p[:len(p) - 1]
+	return p[:len(p)-1]
 }
 
 func abortCompile(err Err) {
 	switch err {
 	case ErrFilePermission:
-		fmt.Printf("Err: can't open file '%s', permission denied\n", srcFileName)
+		fmt.Fprintf(os.Stderr, "Error: can't open file '%s', permission denied\n", srcFileName)
 		os.Exit(2)
 	case ErrFileDoesNotExist:
-		fmt.Printf("Err: can't open '%s', file does not exist\n", srcFileName)
+		fmt.Fprintf(os.Stderr, "Error: can't open '%s', file does not exist\n", srcFileName)
 		os.Exit(3)
 	case ErrFileOpen:
-		fmt.Printf("Err: can't open file '%s'\n", srcFileName)
+		fmt.Fprintf(os.Stderr, "Error: can't open file '%s'\n", srcFileName)
+		os.Exit(4)
 	case ErrBackJumpBeforeForward:
-		fmt.Printf("Err: ']' occurs before '['\n")
+		fmt.Fprintf(os.Stderr, "Error in file \"%s\" at %d:%d: ']' occurs before '['\n",
+			srcFileName, position.line, position.col)
 		os.Exit(5)
 	case ErrUnknownCharacter:
-		fmt.Printf("Err: Unknown character '%c'\n", ch)
+		fmt.Fprintf(os.Stderr, "Erorr in file \"%s\" at %d:%d: Unknown character '%c'\n",
+			srcFileName, position.line, position.col, ch)
 		os.Exit(6)
 	}
 }
