@@ -1,5 +1,5 @@
 // Package token contains type Token that represent
-// the types of tokens the scanner recognises.
+// the types of tokens that the scanner recognises.
 
 package token
 
